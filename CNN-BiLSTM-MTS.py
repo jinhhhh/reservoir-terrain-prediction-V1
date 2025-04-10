@@ -14,18 +14,17 @@ from torch import nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import seaborn as sns
-import openpyxl as xl
 
-# 设置随机种子以确保结果可重复
+# Set a random seed to ensure the reproducibility of the results.
 torch.manual_seed(42)
 np.random.seed(42)
 
-# 加载并预处理数据
+# Load and preprocess the data.
 def load_and_preprocess_data(cross_section_dir, feature_file, history_size=4, target_size=2):
     path_dir = Path(cross_section_dir)
     file_list = sorted(
         [f for f in path_dir.glob('*.xlsx')],
-        key=lambda x: int(x.stem.replace('黄河', ''))
+        key=lambda x: int(x.stem.replace('Yellow River', ''))
     )
     print(f"Found {len(file_list)} cross-section files.")
 
@@ -92,7 +91,7 @@ def load_and_preprocess_data(cross_section_dir, feature_file, history_size=4, ta
 
     return x_train, str_train, y_train, x_val, str_val, y_val, x_test, str_test, y_test
 
-# 自定义 RAE 损失函数
+# Customize the RAE loss function
 class RAE_Loss(nn.Module):
     def __init__(self, y_baseline):
         super(RAE_Loss, self).__init__()
@@ -103,13 +102,13 @@ class RAE_Loss(nn.Module):
         baseline_errors = torch.abs(y_true - self.y_baseline).sum()
         return absolute_errors / (baseline_errors + 1e-10)
 
-# 定义 RSE 计算函数
+# Define a function to calculate the Relative Squared Error (RSE).
 def relative_squared_error(y_true, y_pred, y_baseline):
     squared_errors = np.sum((y_true - y_pred) ** 2)
     baseline_squared_errors = np.sum((y_true - y_baseline) ** 2)
     return squared_errors / (baseline_squared_errors + 1e-10)
 
-# 改进后的CNN+LSTM模型
+# Improved CNN-LSTM model
 class CNN_LSTM_Model(nn.Module):
     def __init__(self, history_size, structured_feature_size, future_target, num_features, lstm_hidden_size=128, lstm_num_layers=2):
         super(CNN_LSTM_Model, self).__init__()
@@ -149,7 +148,7 @@ class CNN_LSTM_Model(nn.Module):
 
         return out
 
-# 保存预测结果到Excel
+# Save the prediction results to an Excel file.
 def save_predictions_to_excel(predictions, original_file, save_dir, target_years=[22,23]):
     original_df = pd.read_excel(original_file)
     original_df = original_df.drop(0)
@@ -160,24 +159,24 @@ def save_predictions_to_excel(predictions, original_file, save_dir, target_years
 
     predictions = predictions.reshape(num_cross, num_spatial, len(target_years))
 
-    columns = [f'黄河{56 - i}' for i in range(num_cross)]
+    columns = [f'Yellow River{56 - i}' for i in range(num_cross)]
 
     for year_idx, year in enumerate(target_years):
         df_pred = pd.DataFrame(columns=['section'] + columns)
         df_pred['section'] = sections
 
         for cross in range(num_cross):
-            column_name = f'黄河{56 - cross}'
+            column_name = f'Yellow River{56 - cross}'
             df_pred[column_name] = predictions[cross, :, year_idx]
 
-        save_path = os.path.join(save_dir, f'黄河{year}.xlsx')
+        save_path = os.path.join(save_dir, f'Yellow River{year}.xlsx')
         df_pred.to_excel(save_path, index=False)
-        print(f"预测文件已保存到 {save_path}")
+        print(f"Prediction file saved to {save_path}")
 
-# 主函数
+# Main function
 def main():
-    cross_section_dir = r"D:\Pycharm\PyCharm Projection\paper_model\input_data\黄河断面插补Ⅱ - 深度学习 - 1"
-    feature_file = r"D:\Pycharm\PyCharm Projection\paper_model\input_data\tezhengzhi-2.xlsx"
+    cross_section_dir = "/Yellow River section interpolationⅡ - Deep Learning - 1"
+    feature_file = "/tezhengzhi-2.xlsx"
 
     history_size = 4
     target_size = 2
@@ -267,7 +266,7 @@ def main():
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             trigger_times = 0
-            save_path = r"D:\Pycharm\PyCharm Projection\paper_model\output_data\Test\CL\best_model.pth"
+            save_path = "/output data/CL/best_model.pth"
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
             torch.save(model.state_dict(), save_path)
             print(f"Best model saved to {save_path}")
@@ -289,14 +288,14 @@ def main():
     plt.legend()
     plt.grid(True)
 
-    loss_curve_path = r"D:\Pycharm\PyCharm Projection\paper_model\output_data\Test\CL\figures\loss_curve.png"
+    loss_curve_path = "/output data/CL/figures/loss_curve.png"
     os.makedirs(os.path.dirname(loss_curve_path), exist_ok=True)
     plt.savefig(loss_curve_path, bbox_inches='tight', dpi=300)
-    print(f"损失曲线已保存到 {loss_curve_path}")
+    print(f"Loss curve saved to {loss_curve_path}")
 
     plt.show()
 
-    best_model_path = r"D:\Pycharm\PyCharm Projection\paper_model\output_data\Test\CL\best_model.pth"
+    best_model_path = "/output data/CL/best_model.pth"
     model.load_state_dict(torch.load(best_model_path))
     print(f"Loaded best model from {best_model_path}")
 
@@ -377,29 +376,29 @@ def main():
         'Relative Error Std Dev (%)': [relative_std * 100]
     }
     metrics_df = pd.DataFrame(metrics)
-    metrics_save_path = r"D:\Pycharm\PyCharm Projection\paper_model\output_data\Test\CL\metric_results\metric_results"
+    metrics_save_path = "/output data/CL/metric_results"
     os.makedirs(metrics_save_path, exist_ok=True)
     metrics_df.to_csv(os.path.join(metrics_save_path, 'evaluation_metrics.csv'), index=False)
-    print(f"评估指标已保存到 {os.path.join(metrics_save_path, 'evaluation_metrics.csv')}")
+    print(f"Evaluation metrics saved to {os.path.join(metrics_save_path, 'evaluation_metrics.csv')}")
 
-    predictions_save_path = r"D:\Pycharm\PyCharm Projection\paper_model\output_data\Test\CL\prediction_results"
+    predictions_save_path = "/output data/CL/prediction_results"
     os.makedirs(predictions_save_path, exist_ok=True)
 
     for idx in range(target_size):
         pred_year = all_pred_inverse[:, idx]
         pred_df = pd.DataFrame(pred_year, columns=[f'Pred_Year{idx+1}'])
         pred_df.to_csv(os.path.join(predictions_save_path, f'pred_result_year{idx+1}.csv'), index=False)
-        print(f"保存文件 {os.path.join(predictions_save_path, f'pred_result_year{idx+1}.csv')} 成功")
+        print(f"File saved {os.path.join(predictions_save_path, f'pred_result_year{idx+1}.csv')} successfully")
         pred_df.to_csv(os.path.join(predictions_save_path, f'pred_result_year{idx+1}.csv'), index=False)
-        print(f"保存文件 {os.path.join(predictions_save_path, f'pred_result_year{idx+1}.csv')} 成功")
+        print(f"File saved {os.path.join(predictions_save_path, f'pred_result_year{idx+1}.csv')} successfully")
 
-    # 保存预测结果为 Excel 格式
-    original_file = r"D:\Pycharm\PyCharm Projection\paper_model\input_data\黄河断面插补Ⅱ - 深度学习 - 1\黄河09.xlsx"
-    save_dir_excel = r"D:\Pycharm\PyCharm Projection\paper_model\output_data\Test\CL\prediction_results_excel"
+    # Save prediction results in Excel format
+    original_file = "/Yellow River section interpolationⅡ - Deep Learning - 1/Yellow River09.xlsx"
+    save_dir_excel = "/output data/CL/prediction_results_excel"
     os.makedirs(save_dir_excel, exist_ok=True)
     save_predictions_to_excel(all_pred_inverse, original_file, save_dir_excel, target_years=[22,23])
 
-    print("所有任务完成！")
+    print("All tasks completed!")
 
 if __name__ == '__main__':
     main()
